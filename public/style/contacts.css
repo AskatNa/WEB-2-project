@@ -1,0 +1,80 @@
+body {
+    background-color: #1e1e2e;
+    color: #e0e0e0;
+    font-family: 'Poppins', sans-serif;
+}
+
+h1, h2 {
+    text-align: center;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.navbar {
+    background-color: #12121c !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff !important;
+}
+
+.navbar-nav .nav-link {
+    color: #ffffff !important;
+    transition: color 0.3s;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #007bff !important;
+}
+
+.form-card {
+    background: #282a36;
+    color: #ffffff;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0px 5px 15px rgba(255, 255, 255, 0.1);
+    padding: 20px;
+}
+
+input, textarea, select {
+    background: #3a3f5b;
+    border: 1px solid #555;
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #bbb;
+}
+
+button {
+    background: #007bff;
+    border: none;
+    padding: 10px 15px;
+    font-weight: bold;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 5px;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    input, textarea, select {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    button {
+        width: 100%;
+    }
+}

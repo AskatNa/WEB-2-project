@@ -1,10 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wrist Watches Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/style/homepage.css">
 </head>
 <body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Web Technologies</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="/bmi">BMI Calculator</a></li>
+                <li class="nav-item"><a class="nav-link" href="/blogs/page">Blogs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/contact">Contacts</a></li>
+                <li class="nav-item"><a class="nav-link" href="/qr">QR Code</a></li>
+                <li class="nav-item"><a class="nav-link" href="/holiday">Holiday</a></li>
+                <li class="nav-item"><a class="nav-link" href="/location">Map</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item auth-links"><a class="nav-link" href="/signup">Signup</a></li>
+                <li class="nav-item auth-links"><a class="nav-link" href="/login">Login</a></li>
+                <li class="nav-item" id="logoutLink" style="display: none;"><a class="nav-link" href="/logout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
+<div class="container py-5">
+    <h2 class="text-center mb-4">Weather, Air Quality & News</h2>
+    <form id="weatherForm" class="d-flex justify-content-center mb-3">
+        <input type="text" id="cityInput" class="form-control w-50 me-2" placeholder="Enter city name" required />
+        <button type="submit" class="btn btn-primary">Get Info</button>
+    </form>
+
+    <div id="weather" class="text-center mb-4">
+        <p>Enter a city name to get weather data</p>
+    </div>
+
+    <div id="airQuality" class="text-center mb-4"></div>
+    <div id="news" class="text-center mb-4"></div>
+</div>
+
+<script>
+    async function updateNavbar() {
+        try {
+            const response = await fetch('/session-info');
+            const data = await response.json();
+            const isLoggedIn = data.user !== null;
+
+            if (isLoggedIn) {
+                document.querySelectorAll('.auth-links').forEach(link => link.style.display = 'none');
+                document.getElementById('logoutLink').style.display = 'block';
+            } else {
+                document.querySelectorAll('.auth-links').forEach(link => link.style.display = 'block');
+                document.getElementById('logoutLink').style.display = 'none';
+            }
+        } catch (error) {
+            console.error("Error fetching session info:", error);
+        }
+    }
+
+    updateNavbar();
+
+    document.getElementById("weatherForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const city = document.getElementById("cityInput").value;
+        try {
+            const weatherResponse = await fetch(`/weather?city=${city}`);
+            const weatherData = await weatherResponse.json();
+
+            if (weatherResponse.ok) {
+                document.getElementById("weather").innerHTML = `
+            <div class="card mx-auto" style="width: 18rem;">
+              <img src="${weatherData.icon}" class="card-img-top" alt="Weather Icon">
+              <img src="${weatherData.flag}" alt="Country Flag" style="width: 30px; margin-left: 5px;">
+              <div class="card-body">
+                <h5 class="card-title">${weatherData.city}, ${weatherData.country}</h5>
+                <p class="card-text">
+                  <strong>Temperature:</strong> ${weatherData.temperature}°C<br>
+                  <strong>Feels Like:</strong> ${weatherData.feels_like}°C<br>
+                  <strong>Description:</strong> ${weatherData.description}<br>
+                  <strong>Humidity:</strong> ${weatherData.humidity}%<br>
+                  <strong>Pressure:</strong> ${weatherData.pressure} hPa<br>
+                  <strong>Wind Speed:</strong> ${weatherData.wind_speed} m/s<br>
+                  <strong>Coordinates:</strong> [${weatherData.coordinates.lat}, ${weatherData.coordinates.lon}]
+                </p>
+              </div>
+            </div>`;
+                fetchAirQuality(weatherData.coordinates.lat, weatherData.coordinates.lon);
+                fetchNews(city);
+            } else {
+                document.getElementById("weather").innerHTML = `<p class="text-danger">${weatherData.error}</p>`;
+            }
+        } catch (err) {
+            document.getElementById("weather").innerHTML = `<p class="text-danger">Error fetching data</p>`;
+        }
+    });
+
+    async function fetchAirQuality(lat, lon) {
+        try {
+            const airQualityResponse = await fetch(`/air_quality?lat=${lat}&lon=${lon}`);
+            if (!airQualityResponse.ok) throw new Error("Failed to fetch air quality");
+
+            const airQualityData = await airQualityResponse.json();
+            document.getElementById("airQuality").innerHTML = `
+            <h4>Air Quality</h4>
+            <p><strong>AQI:</strong> ${airQualityData.data.list[0].main.aqi} (US AQI)</p>
+        `;
+        } catch (err) {
+            console.error("Air Quality Fetch Error:", err);
+            document.getElementById("airQuality").innerHTML = `<p class="text-danger">Error fetching air quality data</p>`;
+        }
+    }
+
+
+    async function fetchNews(city) {
+        try {
+            const newsResponse = await fetch(`/news?city=${city}`);
+            const newsData = await newsResponse.json();
+            if (newsResponse.ok) {
+                let articlesHTML = "<h4>Latest News</h4>";
+                newsData.articles.slice(0, 3).forEach(article => {
+                    articlesHTML += `
+              <div class="card mb-3 mx-auto" style="width: 18rem;">
+                <img src="${article.urlToImage}" class="card-img-top" alt="News Image">
+                <div class="card-body">
+                  <h6 class="card-title">${article.title}</h6>
+                  <p class="card-text">${article.description}</p>
+                  <a href="${article.url}" class="btn btn-sm btn-primary" target="_blank">Read More</a>
+                </div>
+              </div>`;
+                });
+                document.getElementById("news").innerHTML = articlesHTML;
+            }
+        } catch (err) {
+            document.getElementById("news").innerHTML = `<p class="text-danger">Error fetching news</p>`;
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
