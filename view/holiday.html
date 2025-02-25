@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holiday Information</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/style/homepage.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Web Technologies</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="/bmi">BMI Calculator</a></li>
+                <li class="nav-item"><a class="nav-link" href="/blogs/page">Blogs</a></li>
+                <li class="nav-item"><a class="nav-link" href="/contact">Contacts</a></li>
+                <li class="nav-item"><a class="nav-link" href="/qr">QR Code</a></li>
+                <li class="nav-item"><a class="nav-link" href="/holiday">Holiday</a></li>
+                <li class="nav-item"><a class="nav-link" href="/location">Map</a></li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item auth-links"><a class="nav-link" href="/signup">Signup</a></li>
+                <li class="nav-item auth-links"><a class="nav-link" href="/login">Login</a></li>
+                <li class="nav-item" id="logoutLink" style="display: none;"><a class="nav-link" href="/logout">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container mt-5">
+    <h2 class="text-center">Holiday Information</h2>
+    <div class="mb-3">
+        <label for="country" class="form-label">Country Code:</label>
+        <input type="text" id="country" class="form-control" placeholder="Enter country code (e.g., US)">
+    </div>
+    <div class="mb-3">
+        <label for="date" class="form-label">Select Date:</label>
+        <input type="date" id="date" class="form-control">
+    </div>
+    <button class="btn btn-primary" onclick="fetchHolidays()">Get Holidays</button>
+    <div id="holidayResults" class="mt-4"></div>
+</div>
+
+<script>
+    async function updateNavbar() {
+        try {
+            const response = await fetch('/session-info');
+            const data = await response.json();
+            const isLoggedIn = data.user !== null;
+
+            if (isLoggedIn) {
+                document.querySelectorAll('.auth-links').forEach(link => link.style.display = 'none');
+                document.getElementById('logoutLink').style.display = 'block';
+            } else {
+                document.querySelectorAll('.auth-links').forEach(link => link.style.display = 'block');
+                document.getElementById('logoutLink').style.display = 'none';
+            }
+        } catch (error) {
+            console.error("Error fetching session info:", error);
+        }
+    }
+
+    updateNavbar();
+    async function fetchHolidays() {
+        const country = document.getElementById('country').value.toUpperCase().trim();
+        const dateInput = document.getElementById('date').value;
+
+        if (!country || !dateInput) {
+            alert("Please enter a country code and select a date.");
+            return;
+        }
+
+        const date = new Date(dateInput);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        try {
+            const response = await fetch(`/holiday/holidays?country=${country}&year=${year}&month=${month}&day=${day}`);
+            const holidays = await response.json();
+
+            if (!Array.isArray(holidays)) {
+                throw new Error(holidays.error?.message || "Invalid response from server");
+            }
+
+            let output = '<h4>Holidays:</h4><ul class="list-group">';
+            holidays.forEach(holiday => {
+                output += `<li class="list-group-item">${holiday.name} - ${holiday.date}</li>`;
+            });
+            output += '</ul>';
+
+            document.getElementById('holidayResults').innerHTML = output;
+        } catch (error) {
+            document.getElementById('holidayResults').innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            console.error("Error fetching holidays:", error);
+        }
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
